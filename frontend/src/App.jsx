@@ -1,122 +1,105 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { MDBTable, MDBTableHead, MDBTableBody } from "mdb-react-ui-kit";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import api from "./utils/api.js";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [tasks, setTasks] = useState([]);
+
+  const allTask = async () => {
+    try {
+      const res = await api.get("/task");
+      setTasks(res.data.data); // backend responds with { status, data: [...] }
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+    }
+  };
+
+  useEffect(() => {
+    // allTask sets state only after an awaited fetch, so no cascading render
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    allTask();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    try {
+      await api.delete(`/task/${id}`);
+      setTasks((prev) => prev.filter((task) => task._id !== id));
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="container">
+      <div className="row">
+        <div className="col-10 mt-5 mx-auto">
+          <div className="card">
+            <h1 className="text-center fw-bold text-primary">Task App</h1>
+            <div className="d-flex justify-content-end">
+              <Link to="/create" className="btn btn-primary">
+                Create Task
+              </Link>
+            </div>
+            <div className="card-body">
+              <MDBTable>
+                <MDBTableHead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Handle</th>
+                  </tr>
+                </MDBTableHead>
+                <MDBTableBody>
+                  {tasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center text-muted">
+                        No tasks yet. Create one to get started.
+                      </td>
+                    </tr>
+                  ) : (
+                    tasks.map((task, index) => (
+                      <tr key={task._id}>
+                        <th scope="row">{index + 1}</th>
+                        <td>{task.title}</td>
+                        <td>{task.description}</td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              task.is_complete ? "bg-success" : "bg-secondary"
+                            }`}
+                          >
+                            {task.is_complete ? "Completed" : "Pending"}
+                          </span>
+                        </td>
+                        <td>
+                          <Link
+                            to={`/edit/${task._id}`}
+                            className="btn btn-sm btn-warning me-2"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => handleDelete(task._id)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </MDBTableBody>
+              </MDBTable>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </div>
+    </div>
+  );
+};
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
-
-export default App
+export default App;
